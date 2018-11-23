@@ -32,9 +32,21 @@ def get_pivot(wb, PivotTableName, PivotSourceRange, filters, cols, rols, fields)
 		DataField = PivotTable.AddDataField(PivotTable.PivotFields(fields[i]))
 		# DataField.NumberFormat = '#\'##0.00'
 		DataField.NumberFormat = '###0.00'
+		DataField.Function = win32c.xlSum#xlCount #win32c.xlAverage # win32c.xlCount #win32c.xlSum
+		# DataField.Function
+		# https://docs.microsoft.com/en-us/office/vba/api/excel.xlconsolidationfunction
+
+def build_cube(from_df, to_csv, group_by_cols, max_cols, sum_cols):
+	#from_df
+
+	# group_by_cols
+	# max(max_cols)
+	# sum(sum_cols)
+
+	pass
 
 
-Excel   = win32com.client.gencache.EnsureDispatch('Excel.Application')
+Excel = win32com.client.gencache.EnsureDispatch('Excel.Application')
 Excel.Visible = 1# 0
 
 wb = Excel.Workbooks.Add()
