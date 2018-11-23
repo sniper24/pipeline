@@ -53,7 +53,7 @@ class ExcelChart:
                                PlotBy=self.plotBy, \
                                Title=self.chartTitle)
         self.chart.SetSourceData(self.chartSource, self.plotBy)
-        self.chart.HasAxis = (constants.xlCategory, constants.xlPrimary)
+        #self.chart.HasAxis = (constants.xlCategory, constants.xlPrimary)
         self.chart.Axes(constants.xlCategory).HasTitle = 1
         self.chart.Axes(constants.xlCategory).AxisTitle.Text = self.categoryTitle
         self.chart.Axes(constants.xlValue).HasTitle = 1
@@ -165,7 +165,7 @@ def Main():
     excel = ExcelApp()
     excel.Show()
     
-    workbook = excel.AddWorkbook("c:\\temp\\games1.xls")
+    workbook = excel.AddWorkbook(r"D:\GitRepo\pipeline\dev\games1.xlsx")
     
     games = workbook.AddWorksheet("Game Sales")
     accessories = workbook.AddWorksheet("Accessories")
@@ -193,7 +193,7 @@ def Main():
     chart.SetValueTitle("Sales")
     chart.SetCategoryLabels(1)
     chart.SetSeriesLabels(1)
-    chart.CreateChart()
+    # chart.CreateChart()
     
     workbook.Save()
     
