@@ -1,0 +1,15 @@
+Sub Macro2()
+
+'
+
+' Macro2 Macro
+
+'
+
+    Workbooks("Book1").Connections.Add "DESKTOP test.csv", "", "ODBC;DSN=Test;DefaultDir=C:\USERS\V-JZHO\DESKTOP;DriverId=27;FIL=text;MaxBufferSize=2048;PageTimeout=5;", Array("SELECT * FROM 'C:\USERS\V-JZHO\DESKTOP'\'test.csv'"), 2
+
+    ActiveWorkbook.PivotCaches.Create(SourceType:=xlExternal, SourceData:= ActiveWorkbook.Connections("DESKTOP test.csv"), Version:= xlPivotTableVersion12).CreatePivotTable TableDestination:="Sheet1!R1C1", TableName:="PivotTable2", DefaultVersion:=xlPivotTableVersion12
+
+    Cells(1, 1).Select
+
+End Sub
