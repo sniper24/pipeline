@@ -8,7 +8,7 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 """
 TODO:
 
-1. count
+1. count/count_distinct(pd.Series.nunique)
 2. choose right aggregaration function in pivot (base on max/sum/avg/count)
 
 """
