@@ -5,19 +5,32 @@ import pandas as pd
 import numpy as np
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
+"""
+TODO:
 
-'''
-1. load_data
-	just load data from csv to df, get a schema list
-2. build_cube
-	aggragate by different levels and columns then 
-'''
+1. count
+2. choose right aggregaration function in pivot (base on max/sum/avg/count)
+
+"""
 # ----------------------------------------------------------------------------
-def cube(from_df, wb, PivotTableName, group_by_cols, max_cols, sum_cols, avg_cols):
+def cube(from_df, wb, PivotTableName, filters, rols, cols, max_cols, sum_cols, avg_cols):
 	# 1. build_cube to PivotTableName.csv
+	cube_path ="{}.csv".format(PivotTableName)
+	build_cube(from_df=from_df, to_path=cube_path, 
+		group_by_cols = filters+rols+cols, max_cols=max_cols, sum_cols=sum_cols, avg_cols=avg_cols)
 	# 2. connect_csv from PivotTableName.csv
+	wb.Sheets.Add(After=wb.Sheets(wb.Worksheets.Count))
+	sheet_new = wb.Worksheets(wb.Worksheets.Count)
+	sheet_new.Name = "temp"
+	PivotSourceRange = connect_csv(wb, cube_path, "temp")
 	# 3. pivot to wb.PivotTableName (group_by_cols, max_cols, sum_cols, avg_cols)
 
+	_datafields = ["MAX_{}".format(x) for x in max_cols] + ["SUM_{}".format(x) for x in sum_cols] + ["AVG_{}".format(x) for x in avg_cols]
+	pivot(wb, PivotTableName, PivotSourceRange, filters=filters, rols=rols, cols=cols, fields=_datafields)
+
+	# 4. cleanup temp table
+	wb.Worksheets("temp").Delete()
+	
 # ----------------------------------------------------------------------------
 def build_cube(from_df, to_path, group_by_cols, max_cols, sum_cols, avg_cols):
 	df = from_df
@@ -39,7 +52,7 @@ def build_cube(from_df, to_path, group_by_cols, max_cols, sum_cols, avg_cols):
 	dfg = df.groupby(group_by_cols).agg(agg_dict)
 	dfg = dfg.reset_index()
 
-	dfg.columns = ['_'.join(col).strip("_") for col in dfg.columns.values]
+	dfg.columns = ['_'.join(col[::-1]).strip("_") for col in dfg.columns.values]
 	dfg.to_csv(to_path, index=False)
 
 # ----------------------------------------------------------------------------
@@ -62,7 +75,7 @@ def connect_csv(wb, from_path, to_sheet, start_cell=[1,1]):
 	return PivotSourceRange
 
 # ----------------------------------------------------------------------------
-def pivot(wb, PivotTableName, PivotSourceRange, filters, cols, rols, fields):# PivotTargetRange, 
+def pivot(wb, PivotTableName, PivotSourceRange, filters, rols, cols, fields):# PivotTargetRange, 
 	# Add a new worksheet
 	wb.Sheets.Add (After=wb.Sheets(wb.Worksheets.Count))
 	sheet_new = wb.Worksheets(wb.Worksheets.Count)
@@ -74,7 +87,7 @@ def pivot(wb, PivotTableName, PivotSourceRange, filters, cols, rols, fields):# P
 	PivotCache = wb.PivotCaches().Create(SourceType=win32c.xlDatabase, SourceData=PivotSourceRange, Version=win32c.xlPivotTableVersion14)
 	PivotTable = PivotCache.CreatePivotTable(TableDestination=PivotTargetRange, TableName=PivotTableName, DefaultVersion=win32c.xlPivotTableVersion14)
 
-	print "Generating PivotTable: [{}]|ws.count:[{}]|filters:[{}]|cols:[{}]|rols:[{}]|fields:[{}]".format(PivotTableName, wb.Worksheets.Count, "|".join(filters),"|".join(cols),"|".join(rols),"|".join(fields))
+	print "Generating PivotTable: [{}]|ws.count:[{}]|filters:[{}]|rols:[{}]|cols:[{}]|fields:[{}]".format(PivotTableName, wb.Worksheets.Count, "|".join(filters),"|".join(rols),"|".join(cols),"|".join(fields))
 
 	# wb.Sheets.Add (After=wb.Sheets(wb.Worksheets.Count))
 	# sheet_new = wb.Worksheets(2)
@@ -102,10 +115,11 @@ def pivot(wb, PivotTableName, PivotSourceRange, filters, cols, rols, fields):# P
 		# https://docs.microsoft.com/en-us/office/vba/api/excel.xlconsolidationfunction
 
 # ----------------------------------------------------------------------------
-def main():	
+def main1():	
 	Excel = win32com.client.gencache.EnsureDispatch('Excel.Application')
 	Excel.Visible = 1# 0
-
+	Excel.DisplayAlerts = False
+	
 	wb = Excel.Workbooks.Add()
 	print "wb.sheets.count:{}".format(wb.Worksheets.Count)
 	Sheet1 = wb.Worksheets("Sheet1")
@@ -116,7 +130,6 @@ def main():
 	pivot(wb, 'PivotTable3', PivotSourceRange, filters=["Country"], cols=["Sign", "Gender"], rols=["Name"], fields=["Amount"])
 	pivot(wb, 'PivotTable4', PivotSourceRange, filters=["Sign"], cols=["Country", "Gender"], rols=["Name"], fields=["Amount"])
 	pivot(wb, 'PivotTable5', PivotSourceRange, filters=["Gender"], cols=["Country"], rols=["Name"], fields=["Amount", "Amount"])
-	Excel.DisplayAlerts = False
 	wb.Worksheets("Sheet1").Delete()
 	# wb.SaveAs(r'D:\GitRepo\pipeline\dev\output.xlsx')
 	
@@ -130,6 +143,29 @@ def main():
 	Excel.DisplayAlerts = True
 	Excel.Application.Quit()
 
+# ----------------------------------------------------------------------------
+def main():
+	Excel = win32com.client.gencache.EnsureDispatch('Excel.Application')
+	Excel.Visible = 1# 0
+	Excel.DisplayAlerts = False
+	wb = Excel.Workbooks.Add()
+	df = pd.read_csv("./nba.csv")
 
+	# main start
+	cube(df, wb, "Summary", ['Conference', 'Team'], [], [], ['Age'], ['Real_value'],[])
+	cube(df, wb, "By Conference", ['Conference'], ['Team'], [], ['Age'], ['Real_value'],[])
+	cube(df, wb, "By Team", ['Team'], ['Conference'], [], ['Age'], ['Real_value'],[])
+	# ['Conference', 'Team'], ['Age'], ['Real_value'],[]
+	# main ends
+
+	path = "output.xlsx"
+	print path
+	path = os.path.abspath(path).replace("/", "\\")
+	print path
+	
+	wb.SaveAs(path)
+
+	Excel.DisplayAlerts = True
+	Excel.Application.Quit()
 if __name__ == '__main__':
 	main()
