@@ -150,6 +150,7 @@ def main():
 	Excel.DisplayAlerts = False
 	wb = Excel.Workbooks.Add()
 	df = pd.read_csv("./nba.csv")
+	df = df.fillna(0) # TO FIX
 
 	# main start
 	cube(df, wb, "Summary", ['Conference', 'Team'], [], [], ['Age'], ['Real_value'],[])
