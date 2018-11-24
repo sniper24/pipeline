@@ -1,13 +1,46 @@
 import win32com.client
 win32c = win32com.client.constants
+import os
 import pandas as pd
+import numpy as np
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 '''
 1. load_data
 	just load data from csv to df, get a schema list
 2. build_cube
 	aggragate by different levels and columns then 
 '''
+# ----------------------------------------------------------------------------
+def cube(from_path, wb, PivotTableName, group_by_cols, max_cols, sum_cols, avg_cols):
+	pass
+	
+# ----------------------------------------------------------------------------
+def build_cube(from_df, to_path, group_by_cols, max_cols, sum_cols, avg_cols):
+	df = from_df
+	
+	agg_dict = {}
+	for col in max_cols:
+		if col not in agg_dict:
+			agg_dict[col] = {}
+		agg_dict[col]["MAX"] = np.max
+	for col in sum_cols:
+		if col not in agg_dict:
+			agg_dict[col] = {}
+		agg_dict[col]["SUM"] = np.sum
+	for col in avg_cols:
+		if col not in agg_dict:
+			agg_dict[col] = {}
+		agg_dict[col]["AVG"] = np.mean
 
+	dfg = df.groupby(group_by_cols).agg(agg_dict)
+	dfg = dfg.reset_index()
+
+	dfg.columns = ['_'.join(col).strip("_") for col in dfg.columns.values]
+	dfg.to_csv(to_path, index=False)
+
+# ----------------------------------------------------------------------------
 def connect_csv(wb, from_path, to_sheet, start_cell=[1,1]):
 	Sheet1 = wb.Worksheets(to_sheet)
 
@@ -26,16 +59,7 @@ def connect_csv(wb, from_path, to_sheet, start_cell=[1,1]):
 	PivotSourceRange.Select()
 	return PivotSourceRange
 
-def build_cube(from_path, to_path, group_by_cols, max_cols, sum_cols):
-	df = pd.read_csv(from_path)
-
-	# group_by_cols
-	# max(max_cols)
-	# sum(sum_cols)
-
-	pass
-
-
+# ----------------------------------------------------------------------------
 def pivot(wb, PivotTableName, PivotSourceRange, filters, cols, rols, fields):# PivotTargetRange, 
 	# Add a new worksheet
 	wb.Sheets.Add (After=wb.Sheets(wb.Worksheets.Count))
@@ -75,6 +99,7 @@ def pivot(wb, PivotTableName, PivotSourceRange, filters, cols, rols, fields):# P
 		# DataField.Function
 		# https://docs.microsoft.com/en-us/office/vba/api/excel.xlconsolidationfunction
 
+# ----------------------------------------------------------------------------
 def main():	
 	Excel = win32com.client.gencache.EnsureDispatch('Excel.Application')
 	Excel.Visible = 1# 0
@@ -91,7 +116,14 @@ def main():
 	pivot(wb, 'PivotTable5', PivotSourceRange, filters=["Gender"], cols=["Country"], rols=["Name"], fields=["Amount", "Amount"])
 	Excel.DisplayAlerts = False
 	wb.Worksheets("Sheet1").Delete()
-	wb.SaveAs(r'D:\GitRepo\pipeline\dev\output.xlsx')
+	# wb.SaveAs(r'D:\GitRepo\pipeline\dev\output.xlsx')
+	
+	path = "output.xlsx"
+	print path
+	path = os.path.abspath(path).replace("/", "\\")
+	print path
+	
+	wb.SaveAs(path)
 
 	Excel.DisplayAlerts = True
 	Excel.Application.Quit()
