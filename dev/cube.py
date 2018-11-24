@@ -26,8 +26,8 @@ def connect_csv(wb, from_path, to_sheet, start_cell=[1,1]):
 	PivotSourceRange.Select()
 	return PivotSourceRange
 
-def build_cube(from_df, to_csv, group_by_cols, max_cols, sum_cols):
-	#from_df
+def build_cube(from_path, to_path, group_by_cols, max_cols, sum_cols):
+	df = pd.read_csv(from_path)
 
 	# group_by_cols
 	# max(max_cols)
@@ -75,23 +75,27 @@ def pivot(wb, PivotTableName, PivotSourceRange, filters, cols, rols, fields):# P
 		# DataField.Function
 		# https://docs.microsoft.com/en-us/office/vba/api/excel.xlconsolidationfunction
 
+def main():	
+	Excel = win32com.client.gencache.EnsureDispatch('Excel.Application')
+	Excel.Visible = 1# 0
 
-Excel = win32com.client.gencache.EnsureDispatch('Excel.Application')
-Excel.Visible = 1# 0
+	wb = Excel.Workbooks.Add()
+	print "wb.sheets.count:{}".format(wb.Worksheets.Count)
+	Sheet1 = wb.Worksheets("Sheet1")
 
-wb = Excel.Workbooks.Add()
-print "wb.sheets.count:{}".format(wb.Worksheets.Count)
-Sheet1 = wb.Worksheets("Sheet1")
+	PivotSourceRange = connect_csv(wb, r"D:/GitRepo/pipeline/dev/test.csv", "Sheet1", start_cell = [4,2])
+	pivot(wb, 'PivotTable1', PivotSourceRange, filters=["Country", "Gender"], cols=["Sign"], rols=["Name"], fields=["Amount"])
+	pivot(wb, 'PivotTable2', PivotSourceRange, filters=["Sign", "Gender"], cols=["Country"], rols=["Name"], fields=["Amount"])
+	pivot(wb, 'PivotTable3', PivotSourceRange, filters=["Country"], cols=["Sign", "Gender"], rols=["Name"], fields=["Amount"])
+	pivot(wb, 'PivotTable4', PivotSourceRange, filters=["Sign"], cols=["Country", "Gender"], rols=["Name"], fields=["Amount"])
+	pivot(wb, 'PivotTable5', PivotSourceRange, filters=["Gender"], cols=["Country"], rols=["Name"], fields=["Amount", "Amount"])
+	Excel.DisplayAlerts = False
+	wb.Worksheets("Sheet1").Delete()
+	wb.SaveAs(r'D:\GitRepo\pipeline\dev\output.xlsx')
 
-PivotSourceRange = connect_csv(wb, r"D:/GitRepo/pipeline/dev/test.csv", "Sheet1", start_cell = [4,2])
-pivot(wb, 'PivotTable1', PivotSourceRange, filters=["Country", "Gender"], cols=["Sign"], rols=["Name"], fields=["Amount"])
-pivot(wb, 'PivotTable2', PivotSourceRange, filters=["Sign", "Gender"], cols=["Country"], rols=["Name"], fields=["Amount"])
-pivot(wb, 'PivotTable3', PivotSourceRange, filters=["Country"], cols=["Sign", "Gender"], rols=["Name"], fields=["Amount"])
-pivot(wb, 'PivotTable4', PivotSourceRange, filters=["Sign"], cols=["Country", "Gender"], rols=["Name"], fields=["Amount"])
-pivot(wb, 'PivotTable5', PivotSourceRange, filters=["Gender"], cols=["Country"], rols=["Name"], fields=["Amount", "Amount"])
-Excel.DisplayAlerts = False
-wb.Worksheets("Sheet1").Delete()
-wb.SaveAs(r'D:\GitRepo\pipeline\dev\output.xlsx')
+	Excel.DisplayAlerts = True
+	Excel.Application.Quit()
 
-Excel.DisplayAlerts = True
-Excel.Application.Quit()
+
+if __name__ == '__main__':
+	main()
