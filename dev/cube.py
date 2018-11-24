@@ -13,9 +13,11 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 	aggragate by different levels and columns then 
 '''
 # ----------------------------------------------------------------------------
-def cube(from_path, wb, PivotTableName, group_by_cols, max_cols, sum_cols, avg_cols):
-	pass
-	
+def cube(from_df, wb, PivotTableName, group_by_cols, max_cols, sum_cols, avg_cols):
+	# 1. build_cube to PivotTableName.csv
+	# 2. connect_csv from PivotTableName.csv
+	# 3. pivot to wb.PivotTableName (group_by_cols, max_cols, sum_cols, avg_cols)
+
 # ----------------------------------------------------------------------------
 def build_cube(from_df, to_path, group_by_cols, max_cols, sum_cols, avg_cols):
 	df = from_df
