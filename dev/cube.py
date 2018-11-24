@@ -158,6 +158,7 @@ def main():
 	# ['Conference', 'Team'], ['Age'], ['Real_value'],[]
 	# main ends
 
+	wb.Worksheets("Sheet1").Delete()
 	path = "output.xlsx"
 	print path
 	path = os.path.abspath(path).replace("/", "\\")
