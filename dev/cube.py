@@ -12,6 +12,13 @@ TODO:
 2. choose right aggregaration function in pivot (base on max/sum/avg/count)
 
 """
+
+FORMAT_DICT = {"TEST_FORMAT":'###0.00'}
+# FUNCTION_DICT = {"SUM":win32c.xlSum, "CNT":win32c.xlCount, "AVG":win32c.xlAverage}
+# 	#xlCount #win32c.xlAverage # win32c.xlCount #win32c.xlSum
+# DataField.Function
+# https://docs.microsoft.com/en-us/office/vba/api/excel.xlconsolidationfunction
+
 # ----------------------------------------------------------------------------
 def cube(from_df, wb, PivotTableName, filters, rols, cols, max_cols, sum_cols, avg_cols):
 	# 1. build_cube to PivotTableName.csv
@@ -89,10 +96,6 @@ def pivot(wb, PivotTableName, PivotSourceRange, filters, rols, cols, fields):# P
 
 	print "Generating PivotTable: [{}]|ws.count:[{}]|filters:[{}]|rols:[{}]|cols:[{}]|fields:[{}]".format(PivotTableName, wb.Worksheets.Count, "|".join(filters),"|".join(rols),"|".join(cols),"|".join(fields))
 
-	# wb.Sheets.Add (After=wb.Sheets(wb.Worksheets.Count))
-	# sheet_new = wb.Worksheets(2)
-	# sheet_new.Name = 'Hello'
-
 	for i in range(len(filters)):
 		PivotTable.PivotFields(filters[i]).Orientation = win32c.xlPageField
 		PivotTable.PivotFields(filters[i]).Position = i+1
@@ -105,14 +108,28 @@ def pivot(wb, PivotTableName, PivotSourceRange, filters, rols, cols, fields):# P
 		PivotTable.PivotFields(cols[i]).Position = i+1
 		PivotTable.PivotFields(cols[i]).Subtotals = [False, False, False, False, False, False, False, False, False, False, False, False]
 	for i in range(len(fields)):
-		DataField = PivotTable.AddDataField(PivotTable.PivotFields(fields[i]))
-		# , "Sum of Uptime", xlSum
-		# DataField.NumberFormat = '#\'##0.00'
-		DataField.NumberFormat = '###0.00'
-		DataField.Name = 'Total Amt'
-		DataField.Function = win32c.xlSum#xlCount #win32c.xlAverage # win32c.xlCount #win32c.xlSum
-		# DataField.Function
-		# https://docs.microsoft.com/en-us/office/vba/api/excel.xlconsolidationfunction
+		if type(fields[i]) == type({}):
+			# {"col":"", "format":"test_format", "display":"total_amt", "agg":"sum"}
+			col 	= fields[i]['col']
+			format_ = fields[i]['format']
+			display = fields[i]['display']
+			agg 	= fields[i]['agg']
+			DataField = PivotTable.AddDataField(PivotTable.PivotFields(col))
+			if format_ in FORMAT_DICT:
+				try:
+					DataField.NumberFormat = FORMAT_DICT[format_.upper()]
+				except:
+					print "[{}] format: {} not found".format(col, format_)
+				try:
+					DataField.Name = display
+				except:
+					pass
+				try:
+					DataField.Function = FUNCTION_DICT[agg.upper()]
+				except:
+					print "[{}] agg: {} not found".format(col, agg)
+		else:
+			DataField = PivotTable.AddDataField(PivotTable.PivotFields(fields[i]))
 
 # ----------------------------------------------------------------------------
 def main1():	
